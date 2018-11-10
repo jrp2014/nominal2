@@ -59,7 +59,7 @@ instance Nominal (Defer t) where
   -- This is where 'Defer' pays off. Rather than using 'force',
   -- we compile the permutations for later efficient use.
   π • (Defer sigma t) = Defer (perm_composeR π sigma) t
-  
+
 -- ----------------------------------------------------------------------
 -- * Atom abstraction
 
@@ -97,13 +97,13 @@ instance (Nominal t, Eq t) => Eq (BindAtom t) where
   b1 == b2 = atom_open (atom_merge b1 b2) $ \a (t1,t2) -> t1 == t2
 
 instance (Nominal t) => Nominal (BindAtom t) where
-  π • (BindAtom n f) = BindAtom n (\x -> π • (f x))
+  π • (BindAtom n f) = BindAtom n (\x -> π • f x)
 
 -- | Merge two abstractions. The defining property is
 --
 -- > merge (x.t) (x.s) = (x.(t,s))
 atom_merge :: (Nominal t, Nominal s) => BindAtom t -> BindAtom s -> BindAtom (t,s)
-atom_merge (BindAtom ng f) (BindAtom ng' g) = (BindAtom ng'' h) where
+atom_merge (BindAtom ng f) (BindAtom ng' g) = BindAtom ng'' h where
   ng'' = combine_names ng ng'
   h x = Defer perm_identity (force (f x), force (g x))
 
@@ -205,7 +205,7 @@ instance (Nominal a, Nominal b) => Nominal (Either a b)
 -- Special instances
 
 instance (Nominal t, Nominal s) => Nominal (t -> s) where
-  π • f = \x -> π • (f (π' • x))
+  π • f = \x -> π • f (π' • x)
     where
       π' = perm_invert π
 

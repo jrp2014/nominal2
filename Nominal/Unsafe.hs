@@ -26,7 +26,7 @@ import Nominal.ConcreteNames
 -- cell.
 {-# NOINLINE global_used #-}
 global_used :: IORef (Set String)
-global_used = unsafePerformIO $ do
+global_used = unsafePerformIO $
   newIORef Set.empty
 
 -- | Create a globally new concrete name based on the given name
@@ -59,9 +59,7 @@ global_new ng = unsafePerformIO (global_new_io ng)
 -- freshness condition.
 {-# NOINLINE with_unique #-}
 with_unique :: (Unique -> a) -> a
-with_unique k = unsafePerformIO $ do
-  x <- newUnique
-  return (k x)
+with_unique k = unsafePerformIO $ k <$> newUnique
 
 -- | Unsafely embed the 'IO' monad in a continuation monad.
 --
@@ -69,6 +67,4 @@ with_unique k = unsafePerformIO $ do
 -- that the user only uses API functions and respects Pitts's
 -- freshness condition.
 unsafe_with :: IO a -> (a -> b) -> b
-unsafe_with comp k = unsafePerformIO $ do
-  a <- comp
-  return (k a)
+unsafe_with comp k = unsafePerformIO $ k <$> comp

@@ -6,6 +6,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE TupleSections #-}
 
 -- | This module provides a type class 'Bindable'. It contains things
 -- (such as atoms, tuples of atoms, etc.) that can be abstracted by
@@ -127,7 +128,7 @@ data NominalBinder a =
 -- non-binding subterms when defining a 'Bindable' instance. See
 -- <#CUSTOM "Defining custom instances"> for examples.
 nobinding :: a -> NominalBinder a
-nobinding a = NominalBinder [] (\xs -> (a, xs))
+nobinding a = NominalBinder [] (a,)
 
 -- | Constructor for a binder binding a single atom.
 atom_binding :: Atom -> NominalBinder Atom
@@ -153,7 +154,7 @@ instance Functor NominalBinder where
 instance Applicative NominalBinder where
   pure = nobinding
   f <*> b = binder_app f b
-  
+
 -- ----------------------------------------------------------------------
 -- * The Bindable class
 
@@ -181,7 +182,7 @@ class (Nominal a) => Bindable a where
   -- constructed using the 'Applicative' structure of 'NominalBinder'.
   -- See <#CUSTOM "Defining custom instances"> for examples.
   binding :: a -> NominalBinder a
-  
+
   default binding :: (Generic a, GBindable (Rep a)) => a -> NominalBinder a
   binding x = gbinding (from x) to
 
@@ -256,8 +257,8 @@ infixr 5 .
 -- > let (x :. t) = s in (x,t).
 --
 -- See <#CONDITION "Pitts's freshness condition"> for more details.
-pattern (:.) :: (Nominal b, Bindable a) => a -> b -> Bind a b 
-pattern a :. t <- ((\body -> open body (\a t -> (a,t))) -> (a, t))
+pattern (:.) :: (Nominal b, Bindable a) => a -> b -> Bind a b
+pattern a :. t <- (\body -> open body (\a t -> (a,t)) -> (a, t))
  where
    a :. t = a . t
 infixr 5 :.
@@ -281,7 +282,7 @@ abst = (.)
 open :: (Bindable a, Nominal t) => Bind a t -> (a -> t -> s) -> s
 open (Bind f body) k =
   atomlist_open body (\ys t -> k (f ys) t)
-  
+
 -- | A variant of 'open' which moreover chooses a name for the
 -- bound atom that does not clash with any free name in its
 -- scope. This function is mostly useful for building custom
@@ -392,25 +393,25 @@ instance Bindable Atom where
 
 instance Bindable Bool where
   binding = basic_binding
-  
+
 instance Bindable Integer where
   binding = basic_binding
-  
+
 instance Bindable Int where
   binding = basic_binding
-  
+
 instance Bindable Char where
   binding = basic_binding
-  
+
 instance Bindable Double where
   binding = basic_binding
-  
+
 instance Bindable Float where
   binding = basic_binding
-  
+
 instance Bindable Ordering where
   binding = basic_binding
-  
+
 instance Bindable (Basic t) where
   binding = basic_binding
 
@@ -419,9 +420,9 @@ instance Bindable Literal where
 
 instance (Nominal t) => Bindable (NoBind t) where
   binding = nobinding
-  
+
 -- Generic instances
-  
+
 instance (Bindable a) => Bindable [a]
 instance Bindable ()
 instance (Bindable a, Bindable b) => Bindable (a, b)
@@ -455,7 +456,7 @@ instance GBindable V1 where
   gbinding = undefined -- never occurs, because V1 is empty
 
 instance GBindable U1 where
-  gbinding a k = NominalBinder [] (\xs -> (k a, xs))
+  gbinding a k = NominalBinder [] (k a,)
 
 instance (GBindable a, GBindable b) => GBindable (a :*: b) where
   gbinding (a :*: b) k =
@@ -467,7 +468,7 @@ instance (GBindable a, GBindable b) => GBindable (a :+: b) where
 
 instance (GBindable a) => GBindable (M1 i c a) where
   gbinding (M1 a) k = gbinding a (\a -> k (M1 a))
-  
+
 instance (Bindable a) => GBindable (K1 i a) where
   gbinding (K1 a) k = binder_map k (K1 <$> binding a)
 

@@ -11,6 +11,7 @@ module Nominal.Permutation where
 import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Maybe
 
 import Nominal.Atom
 
@@ -55,9 +56,7 @@ p_composeL (Perm sigma) (Perm tau) t'@(Perm tau_inv) = Perm rho
 -- | Apply a permutation to an atom. O(1).
 p_apply_atom :: Perm -> Atom -> Atom
 p_apply_atom (Perm sigma) a =
-  case Map.lookup a sigma of
-    Nothing -> a
-    Just b -> b
+  fromMaybe a (Map.lookup a sigma)
 
 -- | Swap /a/ and /b/. O(1).
 p_swap :: Atom -> Atom -> Perm
@@ -137,7 +136,7 @@ perm_of_swaps xs = aux xs where
 -- | Turn a permutation into a list of swaps. This is mostly useful
 -- for testing. O(/n/).
 swaps_of_perm :: Permutation -> [(Atom, Atom)]
-swaps_of_perm sigma = [ y | Just y <- ys ]
+swaps_of_perm sigma = Data.Maybe.catMaybes ys
   where
     domain = perm_domain sigma
     (tau, ys) = mapAccumL f sigma domain

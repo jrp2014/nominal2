@@ -88,8 +88,7 @@ support_delete a (Support s) = Support (Set.delete (A a) s)
 
 -- | Delete a list of atoms from the support.
 support_deletes :: [Atom] -> Support -> Support
-support_deletes [] s = s
-support_deletes (a:as) s = support_deletes as (support_delete a s)
+support_deletes as s = foldl (flip support_delete) s as
 
 -- | Add a literal string to the support.
 support_string :: String -> Support
