@@ -1,5 +1,9 @@
 ChangeLog
 
+v0.2.0.1 2018/11/10
+	Some hlinting
+	Compiler flags in nominal.cabal
+
 v0.2.0.0 2018/11/10
 	(2018/11/09) PS1 - documentation updates: added related works,
 	acknowledgements, and references. Added a README file for
